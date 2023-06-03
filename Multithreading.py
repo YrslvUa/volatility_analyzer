@@ -1,14 +1,14 @@
 import csv
 import os
 import time
-from threading import Thread
+from threading import Thread, Lock
 
 
+# I download and unzip file from google_drive with this:
 # from google_drive_downloader import GoogleDriveDownloader as gdd
 
 # gdd.download_file_from_google_drive(file_id='1l5sia-9c-t91iIPiGyBc1s9mQ8RgTNqb',
-#                                     dest_path='./mnist.zip',
-#                                     unzip=True)
+#                                     dest_path='./mnist.zip', unzip=True)
 def time_track(func):
     def surrogate(*args, **kwargs):
         started_at = time.time()
@@ -17,14 +17,16 @@ def time_track(func):
         elapsed = round(ended_at - started_at, 4)
         print(f'Функция работала {elapsed} секунд(ы)')
         return result
+
     return surrogate
 
 
 class TickerHandler(Thread):
 
-    def __init__(self, folder):
+    def __init__(self, folder, lock):
         super().__init__()
         self.folder = folder
+        self.lock = lock
         self.volatility_data = {}
 
     def run(self):
@@ -45,17 +47,19 @@ class TickerHandler(Thread):
 
                 average_price = (max_price + min_price) / 2
                 volatility = ((max_price - min_price) / average_price) * 100
+                self.lock.acquire()
                 self.volatility_data[ticker] = volatility
-
+                self.lock.release()
 
 
 @time_track
 def main():
     folder = 'trades'
     threads = []
+    lock = Lock()
 
     for _ in range(4):
-        handler = TickerHandler(folder=folder)
+        handler = TickerHandler(folder=folder, lock=lock)
         threads.append(handler)
         handler.start()
 
