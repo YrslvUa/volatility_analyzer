@@ -7,6 +7,6 @@ def time_track(func):
         result = func(*args, **kwargs)
         ended_at = time.time()
         elapsed = round(ended_at - started_at, 4)
-        print(f'Функция работала {elapsed} секунд(ы)')
+        print(f'Function worked {elapsed} sec.')
         return result
     return surrogate
